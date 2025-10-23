@@ -1,6 +1,6 @@
 import streamlit as st
-from . import data_loader as dl  # importación relativa
-from . import plots, stats
+from covid_stats_app import data_loader as dl
+from covid_stats_app import plots, stats
 import pandas as pd
 from pathlib import Path
 

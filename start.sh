@@ -1,8 +1,6 @@
 #!/usr/bin/env sh
 set -e
 
-export PYTHONPATH=$(pwd):$PYTHONPATH
-
-PORT=${PORT:-8080}
+# Use PORT provisto por Railway. No usar valor por defecto que no coincida.
 echo "Iniciando Streamlit en 0.0.0.0:${PORT}"
-streamlit run covid_stats_app/app.py --server.port=${PORT} --server.address=0.0.0.0
+streamlit run covid_stats_app/app.py --server.port ${PORT} --server.address 0.0.0.0
