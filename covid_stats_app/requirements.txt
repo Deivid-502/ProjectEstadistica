@@ -1,0 +1,8 @@
+pandas>=1.3
+numpy
+plotly
+streamlit
+pyarrow
+scipy
+pycountry
+python-dateutil
