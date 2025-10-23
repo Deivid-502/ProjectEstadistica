@@ -1,33 +1,33 @@
 import streamlit as st
-from covid_stats_app import data_loader as dl  # local package import path within project
-import plots, stats, data_loader
+from . import data_loader as dl  # importación relativa
+from . import plots, stats
 import pandas as pd
 from pathlib import Path
 
 st.set_page_config(layout='wide', page_title='COVID Stats App')
-
 st.title("COVID Statistics App")
 
-# helper to load datasets with friendly messages
 @st.cache_data(ttl=3600)
 def load_data_all():
     notif = hosp = deaths = pd.DataFrame()
     errors = []
     try:
-        notif = data_loader.load_notifications()
+        notif = dl.load_notifications()
     except Exception as e:
         errors.append(str(e))
     try:
-        hosp = data_loader.load_hospitalizations()
+        hosp = dl.load_hospitalizations()
     except Exception as e:
         errors.append(str(e))
     try:
-        deaths = data_loader.load_deaths_by_age()
+        deaths = dl.load_deaths_by_age()
     except Exception as e:
         errors.append(str(e))
     return notif, hosp, deaths, errors
 
 notif, hosp, deaths, load_errors = load_data_all()
+
+# (el resto del código sigue igual)
 
 if load_errors:
     st.error("No se pudieron cargar algunos datasets. A continuación puedes subir los CSV (se guardarán en converted_covid_data/final)")
