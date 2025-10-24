@@ -1,3 +1,4 @@
+# stats.py
 import numpy as np
 import pandas as pd
 from scipy import stats
@@ -59,8 +60,9 @@ def fit_distributions(series, continuous=True):
             var = float(s.var(ddof=0))
             if var > mean and mean > 0:
                 p = mean / var
-                r = mean * p / (1 - p) if p < 1 else None
-                res.append({'dist': 'nbinom_mom', 'params': {'r': r, 'p': p}})
+                if p < 1:
+                    r = mean * p / (1 - p)
+                    res.append({'dist': 'nbinom_mom', 'params': {'r': float(r), 'p': float(p)}})
         except Exception:
             pass
     return res
