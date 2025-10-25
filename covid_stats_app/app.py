@@ -1,4 +1,3 @@
-# app.py
 import os
 import sys
 from pathlib import Path
@@ -6,7 +5,7 @@ import logging
 import streamlit as st
 import pandas as pd
 import streamlit.components.v1 as components
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 
 # asegurar repo root
 ROOT = Path(__file__).resolve().parent.parent
@@ -135,13 +134,35 @@ Explora la evolución de COVID-19 (2020–2025) con indicadores y visualizacione
             max_date = notif['date'].max().date()
             default_end = max_date
             default_start = max_date - timedelta(days=30) if (max_date - min_date).days >= 30 else min_date
-            start_date, end_date = st.date_input("Rango de fechas", value=(default_start, default_end), min_value=min_date, max_value=max_date)
+            # Uso seguro de st.date_input: el widget puede devolver una fecha o una tupla.
+            date_range = st.date_input("Rango de fechas", value=(default_start, default_end), min_value=min_date, max_value=max_date)
+            # Normalizar salida del widget para obtener start_date y end_date de forma segura
+            if isinstance(date_range, (list, tuple)):
+                try:
+                    start_date = date_range[0]
+                    end_date = date_range[1]
+                except Exception:
+                    start_date = date_range
+                    end_date = None
+            else:
+                # Si el usuario selecciona solo una fecha (p.ej. el selector se cerró antes),
+                # la guardamos como fecha de inicio y pedimos que seleccione la fecha final.
+                start_date = date_range
+                end_date = None
         else:
             start_date, end_date = None, None
 
     with col2:
         if st.button("Aplicar filtro"):
-            st.session_state['summary_filter'] = {'country': sel_country if sel_country != "-- Todos --" else None, 'start': start_date, 'end': end_date}
+            # Validaciones para evitar que la app intente filtrar con fecha fin ausente o mal orden
+            if start_date is None:
+                st.warning("Seleccione una fecha de inicio antes de aplicar el filtro.")
+            elif end_date is None:
+                st.warning("Seleccione también la fecha de fin para aplicar el filtro (usa el calendario y elige ambos días).")
+            elif start_date > end_date:
+                st.warning("La fecha de inicio no puede ser posterior a la fecha de fin.")
+            else:
+                st.session_state['summary_filter'] = {'country': sel_country if sel_country != "-- Todos --" else None, 'start': start_date, 'end': end_date}
     # Mostrar KPI del filtro si aplicado (o instrucción)
     if 'summary_filter' in st.session_state:
         f = st.session_state['summary_filter']
@@ -308,7 +329,11 @@ elif section == "Análisis estadístico":
             a.metric("Media", f"{res['mean']:,.2f}" if res['mean'] is not None else "N/A")
             b.metric("Mediana", f"{res['median']:,.2f}" if res['median'] is not None else "N/A")
             if res['mode'] is not None:
-                c.metric("Moda", f"{res['mode']['mode']} ({res['mode']['count']})")
+                # compatible: safe_mode returns número; safe_mode_with_count devuelve dict
+                if isinstance(res['mode'], dict):
+                    c.metric("Moda", f"{res['mode']['mode']} ({res['mode']['count']})")
+                else:
+                    c.metric("Moda", f"{res['mode']}")
             else:
                 c.metric("Moda", "N/A")
             d.metric("Varianza", f"{res['var']:,.2f}" if res['var'] is not None else "N/A")

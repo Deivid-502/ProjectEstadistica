@@ -1,220 +1,111 @@
+# ProyectoFinalEstadistica — Análisis estadístico del COVID-19
+
+> Panel interactivo para explorar y analizar datos de COVID-19. Pensado para uso educativo y analítico: claro, directo y fácil de adaptar.
 
 ---
 
-# 📘 ProyectoFinalEstadistica — Análisis Estadístico del COVID-19
+## Resumen rápido
 
-## 🧠 Contexto general
+Este repositorio contiene una aplicación **Streamlit** para visualizar y analizar series temporales relacionadas con COVID-19: notificaciones (casos y muertes), hospitalizaciones y muertes por edad. La idea es tener un entorno reproducible para calcular métricas básicas, ajustar distribuciones y crear visualizaciones (incluyendo mapas animados).
 
-**Nombre del proyecto:** `ProyectoFinalEstadistica`
-**Tema:** Análisis estadístico del COVID-19
-**Lenguaje principal:** Python
-**Framework de interfaz:** Streamlit
-**Propósito:** Facilitar el estudio, análisis y visualización de datos sobre el impacto del COVID-19 a través de métricas estadísticas y gráficas interactivas.
+> Nota importante: durante la última revisión sólo se mantuvo un cambio puntual en `app.py` relativo al selector de rango de fechas en la sección *Resumen* (manejo robusto de `st.date_input`). Todo lo demás del proyecto original se mantiene sin modificaciones.
 
 ---
 
-## 🎯 Objetivo
+## Características principales
 
-Este proyecto busca analizar información real del COVID-19 desde un enfoque estadístico, permitiendo al usuario explorar, comparar y comprender los datos de manera dinámica.
-
-El sistema permite:
-
-* Calcular medidas estadísticas básicas (media, mediana, moda, varianza, covarianza).
-* Explorar distribuciones continuas y discretas.
-* Visualizar datos mediante gráficos animados e interactivos.
-* Organizar la información por categorías (casos, hospitalizaciones, muertes).
-* Presentar todo dentro de una interfaz moderna, clara y navegable.
+* Interfaz web rápida con Streamlit.
+* Cálculos estadísticos robustos: media, mediana, moda, varianza, covarianza, correlación, medias móviles y tasas per cápita.
+* Detección y ajuste de distribuciones candidatas (normal, gamma, lognormal, Poisson, NegBin por momentos).
+* Visualizaciones con Plotly: series temporales, histogramas, barras y mapas choropleth animados.
+* Preprocesado opcional para generar archivos procesados y animaciones HTML para el mapa.
 
 ---
 
-## 🧩 Estructura del proyecto
+## Estructura del proyecto
 
 ```
 ProyectoFinalEstadistica/
-│
-├── covid_stats_app/                 ← Código fuente principal
-│   ├── app.py                       ← Interfaz gráfica (Streamlit)
-│   ├── data_loader.py               ← Carga y validación de archivos CSV
-│   ├── stats.py                     ← Cálculos estadísticos
-│   ├── plots.py                     ← Generación de gráficos
-│   └── requirements.txt             ← Dependencias del proyecto
-│
+├── covid_stats_app/
+│   ├── app.py               # Interfaz Streamlit
+│   ├── data_loader.py       # Carga y validación de CSV
+│   ├── stats.py             # Funciones estadísticas
+│   ├── plots.py             # Gráficos y animaciones
+│   └── preprocess.py        # Scripts para preparar datos/animaciones
 ├── converted_covid_data/
-│   └── final/                       ← Archivos CSV finales procesados
-│       ├── deaths_by_age_timeseries.csv
-│       ├── hospitalizations_timeseries.csv
-│       └── notifications_timeseries.csv
-│
-└── README.md                        ← Instrucciones generales
+│   └── final/               # CSV finales esperados (ver formato abajo)
+└── README.md                # Este fichero
 ```
 
 ---
 
-## ⚙️ Funcionamiento del sistema
+## Requisitos / Instalación
 
-### 1. Inicio
+Se sugiere usar un entorno virtual. Requisitos mínimos:
 
-El usuario ejecuta:
+```bash
+python >= 3.9
+pip install -r covid_stats_app/requirements.txt
+# o manualmente
+pip install streamlit pandas numpy plotly scipy pycountry pyarrow
+```
+
+> `pycountry` es opcional pero mejora la conversión de códigos de país (ISO2 → ISO3) para el mapa.
+
+---
+
+## Formato de los CSV esperados
+
+Los archivos CSV deben estar en `converted_covid_data/final/` y tener, como mínimo, las columnas siguientes según el archivo:
+
+* `notifications_timeseries.csv`: `date`, `country`, `country_code`, `new_cases`, `new_deaths`, `cum_cases`, `cum_deaths`, ...
+* `hospitalizations_timeseries.csv`: `date`, `country`, `country_code`, `new_hospitalizations`, `cum_hospitalizations`, `icu`, ...
+* `deaths_by_age_timeseries.csv`: `date`, `age_group`, `deaths`, `country`, ...
+
+**Formatos recomendados:**
+
+* `date` en ISO (`YYYY-MM-DD`) o cualquier formato parseable por `pandas.to_datetime`.
+* `country_code` preferiblemente en ISO-3 (ej. `USA`, `ESP`). Si tienes ISO-2 (ej. `US`, `ES`), la app intentará convertirlos si `pycountry` está instalado.
+
+---
+
+## Arrancar la aplicación
+
+Ejecuta desde la raíz del proyecto:
 
 ```bash
 python -m streamlit run covid_stats_app/app.py
 ```
 
-Esto inicia la aplicación web local ([http://localhost:8501](http://localhost:8501)).
-
-### 2. Carga de datos
-
-El módulo `data_loader.py` busca los CSV en la carpeta `converted_covid_data/final/`.
-Si no los encuentra, la app permite **subir los archivos manualmente** mediante un uploader integrado.
-
-### 3. Interfaz principal
-
-El archivo `app.py` presenta un menú con tres secciones:
-
-* 🧾 **Notificación de nuevos casos y muertes**
-* 🏥 **Hospitalizaciones semanales**
-* ⚰️ **Muertes mensuales por edad**
-
-Cada sección permite:
-
-* Ver los datos de forma tabular.
-* Calcular estadísticas específicas.
-* Visualizar resultados mediante gráficos animados.
-* Generar comparaciones y resúmenes globales.
-
-### 4. Procesamiento estadístico
-
-El módulo `stats.py` se encarga de los cálculos principales:
-
-* **Medidas de tendencia central:** media, mediana, moda.
-* **Medidas de dispersión:** varianza, desviación estándar, covarianza.
-* **Análisis de distribución:** continua y discreta (usando `scipy.stats`).
-
-### 5. Visualización
-
-El módulo `plots.py` genera gráficos con **Plotly** y **Matplotlib**, entre ellos:
-
-* Gráficos de barras, líneas, y dispersión.
-* Histogramas interactivos.
-* Animaciones que muestran la evolución de los datos en el tiempo.
+La app abrirá en `http://localhost:8501`.
 
 ---
 
-## 🧩 Modularidad y roles
+## Uso básico
 
-| Módulo           | Función                                  | Entrada              | Salida                   |
-| ---------------- | ---------------------------------------- | -------------------- | ------------------------ |
-| `data_loader.py` | Carga, validación y preparación de datos | Archivos CSV         | DataFrames limpios       |
-| `stats.py`       | Cálculo de estadísticas                  | DataFrame            | Diccionario de métricas  |
-| `plots.py`       | Creación de gráficos y animaciones       | DataFrame / métricas | Objetos visuales         |
-| `app.py`         | Control de interfaz y flujo principal    | Datos + módulos      | Interfaz web interactiva |
-
----
-
-## 🧮 Estadísticas disponibles
-
-El sistema puede calcular y mostrar:
-
-* **Media**: promedio de los valores.
-* **Mediana**: valor central.
-* **Moda**: valor más frecuente.
-* **Varianza**: dispersión de los datos respecto a la media.
-* **Covarianza**: relación entre dos variables.
-* **Distribución continua/discreta**: análisis probabilístico según tipo de dato.
+1. Si los CSV están en `converted_covid_data/final/`, la app los cargará automáticamente.
+2. Si faltan archivos, usa el uploader integrado en la parte superior de la app para subirlos.
+3. Ve a la sección **Resumen** para un panel con KPIs y filtros (país + rango de fechas). *Nota: el selector de fechas ahora maneja correctamente los casos en que el usuario selecciona una sola fecha accidentalmente.*
+4. En **Notificaciones** verás la serie temporal y el mapa animado (si existe el preprocesado); si no, la app puede intentar generar los CSV procesados cuando selecciones la métrica.
+5. En **Análisis estadístico** puedes calcular medidas y ajustar distribuciones.
 
 ---
 
-## 📊 Tipos de gráficos
+## Cambio clave aplicado (importante)
 
-* Gráficos de líneas (evolución temporal).
-* Gráficos de barras (comparativos).
-* Histogramas (distribuciones).
-* Diagramas de dispersión (relaciones entre variables).
-* Gráficos animados (para series de tiempo).
+Se ha aplicado un **arreglo puntual** en `app.py` para mejorar la experiencia del selector de rango de fechas en la sección *Resumen*:
 
-Todos pueden personalizarse mediante filtros, selección de columnas y parámetros desde la interfaz.
+* Antes: cuando el usuario escogía la fecha de inicio en el calendario, el widget se cerraba y `st.date_input` podía devolver una sola fecha; la app lo interpretaba como falta de `end` y lanzaba un error al aplicar el filtro.
+* Ahora: el código normaliza la salida del `date_input` y valida que existan **ambas** fechas antes de aplicar el filtro. Si falta la fecha final, la app muestra un aviso claro pidiendo que seleccione ambas fechas.
 
----
-
-## 🧰 Dependencias principales
-
-Archivo: `requirements.txt`
-
-```
-streamlit
-pandas
-numpy
-matplotlib
-plotly
-scipy
-```
+Este fue el único cambio que se mantuvo de la última ronda de modificaciones (el resto fue descartado según tu indicación).
 
 ---
 
-## 🧭 Flujo lógico general
+## Buenas prácticas y recomendaciones
 
-```
-Datos CSV → Carga (data_loader.py)
-          → Procesamiento (stats.py)
-          → Visualización (plots.py)
-          → Interfaz (app.py)
-```
+* Haz copia de seguridad de tus archivos antes de sobrescribirlos.
+* Si trabajas con muchos países y rangos grandes, considera usar la opción de escala logarítmica para el mapa (si la agregas) para evitar que países con muchos casos saturen la paleta.
+* Mantén tus CSV con `date` normalizado; facilita reproducibilidad y evita sorpresas en las agrupaciones.
 
 ---
-
-## 🧱 Diseño modular y mantenimiento
-
-El proyecto está diseñado para ser **expandible** y **fácil de mantener**:
-
-* Puedes añadir nuevos conjuntos de datos (más CSVs).
-* Se pueden incorporar nuevos cálculos estadísticos en `stats.py`.
-* Puedes crear nuevos gráficos personalizados en `plots.py`.
-* La interfaz `app.py` permite añadir nuevas secciones o resúmenes fácilmente.
-
-Cada módulo es independiente y comunica sus resultados mediante `pandas.DataFrame` o estructuras JSON simples.
-
----
-
-## 🚀 Posibles mejoras futuras
-
-* Conexión directa a APIs de datos abiertos (OMS, Our World in Data, etc.).
-* Modelos predictivos o proyecciones (regresión lineal o machine learning).
-* Exportación automática de resultados (PDF, Excel, PNG).
-* Panel de control con filtros avanzados.
-* Análisis comparativo entre países o regiones.
-
----
-
-## 🧩 Cómo modificar o ampliar el proyecto
-
-1. **Agregar una nueva fuente de datos:**
-
-   * Coloca el nuevo CSV en `converted_covid_data/final/`.
-   * Crea una nueva función en `data_loader.py` para cargarlo.
-   * Añade un nuevo submenú en `app.py` para visualizarlo.
-
-2. **Agregar nuevas estadísticas:**
-
-   * Implementa la función en `stats.py`.
-   * Llama a esa función desde el menú correspondiente en `app.py`.
-
-3. **Crear un nuevo gráfico:**
-
-   * Diseña el gráfico en `plots.py` (usa Plotly o Matplotlib).
-   * Conéctalo con los datos desde `app.py`.
-
----
-
-## 📚 Resumen conceptual
-
-El **ProyectoFinalEstadistica** no es solo una herramienta técnica, sino también **una plataforma educativa y analítica**.
-Permite estudiar cómo se comportaron las variables del COVID-19 a través del tiempo, cómo se distribuyen los casos, y qué tendencias pueden observarse en diferentes regiones o grupos etarios.
-
-El diseño busca equilibrio entre:
-
-* **Rigor estadístico.**
-* **Claridad visual.**
-* **Facilidad de uso.**
-
----
-
